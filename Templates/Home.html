@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Text Summarizer | AF011</title>
+      <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+ <link rel = "stylesheet" href = "Static/Text_Summarizer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+          <link rel="icon" href="Static/filter_list_2.png" type="image/x-icon">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg" style="background-color: #030315;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/" style="color: white; font-family: Shadows Into Light; font-size: 3em;"><strong>Text Summarizer</strong></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/About" style="color: white; font-size: 1.3em;  letter-spacing: 0.05em;">ABOUT</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert -->
+    <div class="alert alert-primary" role="alert">
+        Hey, This is AF. I'm here to summarize your text. Place the text in the input box, and the summarized text will appear below.
+    </div>
+
+    <!-- Text Area -->
+    <div class="container" style = "margin-top: 3%; margin-bottom: 5%">
+        <div class="card text-center mb-3" style="width: 100%;" >
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form action="/" method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="inputText" class="form-label"><strong>Enter Text</strong></label>
+                                <label for="slider" class="slider"><h6>Summary Length - </h6></label>
+                                <input type="range" min="1" max="10" value="4" id="slider" step ="3" name="text_len" style="background-color: #000000"
+                                                    oninput="storeRangeValue(this.value)">
+                                <textarea class="form-control" id="inputText" rows="20" name="text_input"
+                                    style="resize: none; outline: none;" oninput="updateinputWordCount(this.value)">{{user_text}}
+                                </textarea>
+
+                            </div>
+                            <div class="row">
+        </div>
+
+                            <div class="detail_bttns" style="display: flex; justify-content: space-between;">
+                                <h6 id="input_words" style="margin-left: 1em;">0 Words</h6>
+                                <button class="dt_btn" style="margin-right: 1em;" onclick="summarize()"><span>Summarize</span></button>
+                            </div>
+
+
+                        </form>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="summarizedText" class="form-label"><strong>Summarized Text</strong></label>
+                            <textarea class="form-control" id="summarizedText" rows="20" style="resize: none; outline: none;"
+                                      readonly oninput="updatesummaryWordCount(this.value)">{{summary_text}}</textarea>
+
+                        </div>
+
+
+                       <div class="detail_bttns" style="display: flex; justify-content: space-between;">
+                            <h6 id="summarized_words" style="margin-left: 1em;">0 Words</h6>
+                            <button class="copy_btn" id = "copy_btn" style="margin-right: 1em; display: none;" onclick="copyTextToClipboard()">
+                                <i class="fa-solid fa-copy" id="uncopied"></i>
+                                <i class="fa-solid fa-check" style="display: none;" id="copied"></i>
+                                <i class="fa-solid fa-xmark" style="display: none;" id="error"></i>
+                            </button>
+                       </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer style="background-color: #c4dccf; color: #000; padding: 2em 5em">
+        <p>Thank you for exploring my Text Summarizer!</p>
+        <p>This summarizer utilizes an extractive approach to generate summaries.</p>
+        <p>I appreciate your interest and encourage meaningful contributions. Please refrain from providing numerical data or source codes in your text submissions.</p>
+        <p>Let's create concise and informative summaries together!</p>
+        <p style="font-family: Zeyada; font-size: 3em;">@Badbeast011</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+
+    <script>
+        let summarized_text = document.getElementById('summarizedText');
+
+        function wordcount(text) {
+            const text_array = text && text.value.trim() ? text.value.trim().split(/\s+/) : [];
+            return text_array.length;
+        }
+
+        let summarized_word_len = wordcount(summarized_text);
+
+        let copyBtnSection = document.getElementById('copy_btn');
+
+        console.log('Summarized Word Length:', summarized_word_len);
+        console.log('Summarized Text:', summarized_text.value);
+
+
+        if (summarized_word_len < 1 || summarized_text.value == "No Input to Summarize...!" || summarized_text.value == "Unable to Summarize...!") {
+            console.log('True');
+            copyBtnSection.style.display = 'none'; // Hide the section when there's no summarized text
+        }
+        else {
+            copyBtnSection.style.display = 'block'; // Show the section when summarized text exists
+        }
+
+        document.getElementById("summarized_words").innerHTML = summarized_word_len + ' Words';
+        // Function to count words in a text
+        function countWords(value, targetElementId) {
+            const wordCount = document.getElementById(targetElementId);
+            const words = value.trim().split(/\s+/).filter(word => word !== '').length;
+            wordCount.textContent = words + ' Words';
+            return words;
+        }
+
+        // Function to store text value in localStorage
+        function storeTextValue(value, key) {
+            localStorage.setItem(key, value);
+        }
+
+
+
+        // Function to store the range value in localStorage
+        function storeRangeValue(value) {
+            localStorage.setItem('sliderValue', value);
+        }
+
+        // Function to load stored text values on window load
+        window.onload = function () {
+            const storedTextValue = localStorage.getItem('inputTextValue');
+            const inputTextArea = document.getElementById('inputText');
+
+            if (storedTextValue) {
+                inputTextArea.value = storedTextValue;
+                countWords(storedTextValue, 'input_words');
+                console.log(countWords(storedTextValue, 'input_words'));
+            }
+
+            const storedValue = localStorage.getItem('sliderValue');
+            const slider = document.getElementById('slider');
+            if (storedValue) {
+                slider.value = storedValue;
+            }
+        };
+
+
+        // Function to update word count in the input text
+        function updateinputWordCount(value) {
+            countWords(value, 'input_words');
+            storeTextValue(value, 'inputTextValue'); // Store the updated input text value
+        }
+
+        // Function to copy text to clipboard
+        function copyTextToClipboard() {
+            const summarizedText = document.getElementById('summarizedText').value;
+
+            navigator.clipboard.writeText(summarizedText)
+                .then(() => {
+                    const copymsg = document.getElementById('copied');
+                    const uncopy = document.getElementById('uncopied');
+
+                    copymsg.style.display = 'block';
+                    uncopy.style.display = 'none';
+
+                    setTimeout(() => {
+                        copymsg.style.display = 'none';
+                        uncopy.style.display = 'block';
+                    }, 3000); // Show the message for 3 seconds;
+
+                })
+                .catch((error) => {
+                    const error_copymsg = document.getElementById('error');
+                    const uncopy = document.getElementById('uncopied');
+
+                    error_copymsg.style.display = 'block';
+                    uncopy.style.display = 'none';
+
+                    setTimeout(() => {
+                        error_copymsg.style.display = 'none';
+                        uncopy.style.display = 'block';
+                    }, 3000); // Show the error message for 3 seconds;
+                });
+
+
+        }
+    </script>
+</body>
+</html>
